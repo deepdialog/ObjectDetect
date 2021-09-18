@@ -16,11 +16,11 @@ $ pip install object-detect
 
 ## Model
 
-MIT License
+tfhub
 
-From:
-
-[https://github.com/onnx/models/tree/master/vision/object_detection_segmentation/tiny-yolov3](https://github.com/onnx/models/tree/master/vision/object_detection_segmentation/tiny-yolov3)
+```
+python3 -m tf2onnx.convert --opset 13 --tflite lite-model_yolo-v5-tflite_tflite_model_1.tflite --output model.onnx
+```
 
 ## Classes
 
@@ -190,8 +190,4 @@ toothbrush
 玩具熊
 吹风机
 牙刷
-```
-
-```
-python3 -m tf2onnx.convert --opset 13 --tflite lite-model_yolo-v5-tflite_tflite_model_1.tflite --output model.onnx
 ```
