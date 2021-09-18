@@ -1,3 +1,6 @@
 .ipynb_checkpoints
 *.py[cod]
 *.log
+build
+dist
+*.egg-info
