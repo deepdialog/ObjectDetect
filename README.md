@@ -191,3 +191,7 @@ toothbrush
 吹风机
 牙刷
 ```
+
+```
+python3 -m tf2onnx.convert --opset 13 --tflite lite-model_yolo-v5-tflite_tflite_model_1.tflite --output model.onnx
+```

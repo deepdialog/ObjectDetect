@@ -3,9 +3,10 @@ import os
 import onnxruntime
 import numpy as np
 from PIL import Image
+# import tensorflow as tf
 
 current_dir = os.path.realpath(os.path.dirname(__file__))
-model_path = os.path.join(current_dir, 'tiny-yolov3-11.onnx')
+yolo5_path = os.path.join(current_dir, 'yolo5.onnx')
 class_names = '''person
 bicycle
 car
@@ -218,29 +219,33 @@ def bb_intersection_over_union(boxA, boxB):
     # return the intersection over union value
     return iou
 
+YOLO5 = None
 
-SES = None
+def predict(img_path, threshold=0.45, overlap_threhold=0.45):
+    global YOLO5
+    if YOLO5 is None:
+        YOLO5 = onnxruntime.InferenceSession(yolo5_path)
+    ses = YOLO5
 
-def predict(img_path, threshold=0.1, overlap_threhold=0.5, ses=None):
-    global SES
-    if ses is None:
-        if SES is None:
-            SES = onnxruntime.InferenceSession(model_path)
-        ses = SES
-    image = Image.open(img_path)
-    image = image.resize((456, 456))
-    # input
-    image_data = preprocess(image)
-    image_size = np.array([image.size[1], image.size[0]], dtype=np.float32).reshape(1, 2)
-    outputs = ses.run(None, {'input_1': image_data, 'image_shape': image_size})
-    n_candidates = outputs[0].shape[1]
-    i_batch = 0
+    img = Image.open(img_path)
+    img_vec = np.array(img.resize((320, 320)), dtype=np.float32)
+    img_vec = img_vec[:, :, :3]
+    img_vec = img_vec.reshape((1, 320, 320, 3))
+    img_vec /= 255.0
+    outputs = ses.run(None, {'input_1': img_vec})
+    pred = outputs[0]
+
+    pred[..., 0] *= img.size[1]  # x
+    pred[..., 1] *= img.size[0]  # y
+    pred[..., 2] *= img.size[1]  # w
+    pred[..., 3] *= img.size[0]  # h
+
     ret = []
-    for i in range(n_candidates):
-        scores = outputs[1][i_batch, :, i]
-        cls = np.argmax(scores)
-        score = np.max(scores)
-        box = outputs[0][i_batch, i]
+    for i in range(pred.shape[1]):
+        x, y, w, h, score = pred[0, i, :5]
+        box = [x, y, w + x, h + y]
+        box = [int(x) for x in box]
+        cls = np.argmax(pred[0, i, 5:])
         ret.append({
             'score': score,
             'cls': class_names[cls],
@@ -248,7 +253,6 @@ def predict(img_path, threshold=0.1, overlap_threhold=0.5, ses=None):
             'box': box,
         })
     ret = sorted(ret, key=lambda x: x['score'], reverse=True)
-
     filtered_ret = []
     for item in ret:
         if item['score'] > threshold:
