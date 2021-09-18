@@ -1,0 +1,2 @@
+include object_detect/version.txt
+include object_detect/tiny-yolov3-11.onnx
