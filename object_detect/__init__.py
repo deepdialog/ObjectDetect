@@ -227,7 +227,7 @@ def predict(img_path, threshold=0.45, overlap_threhold=0.45):
         YOLO5 = onnxruntime.InferenceSession(yolo5_path)
     ses = YOLO5
 
-    img = Image.open(img_path)
+    img = Image.open(img_path).convert('RGB')
     img_vec = np.array(img.resize((320, 320)), dtype=np.float32)
     img_vec = img_vec[:, :, :3]
     img_vec = img_vec.reshape((1, 320, 320, 3))
